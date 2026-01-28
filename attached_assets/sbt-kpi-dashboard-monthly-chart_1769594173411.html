@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SBT Philippines KPI Dashboard - Date Entry</title>
+  <style>
+    :root {
+      --primary: #2d8a8e;
+      --success: #32b8c6;
+      --danger: #ff5459;
+      --warning: #e6814d;
+      --bg: #f5f5f2;
+      --surface: #ffffff;
+      --text: #134252;
+      --text-light: #626c71;
+      --border: #c9a998;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.10);
+      --shadow-md: 0 4px 10px rgba(0,0,0,0.12);
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      margin: 0; 
+      padding: 20px; 
+    }
+
+    .container { max-width: 1600px; margin: 0 auto; }
+
+    header {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: 20px;
+      margin-bottom: 18px;
+      border-left: 6px solid var(--primary);
+    }
+
+    h1 { margin: 0 0 6px 0; font-size: 24px; letter-spacing: 0.2px; }
+    .subtitle { margin: 0; color: var(--text-light); font-size: 13px; line-height: 1.35; }
+
+    .top-actions {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+    .filter-input {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--text);
+      min-width: 140px;
+    }
+
+    .filter-input:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+    .btn {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+      white-space: nowrap;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover, #1d7478); }
+
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #fbfbfb; }
+
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #e63946; }
+
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #2a9fa5; }
+
+    .timeframe-tabs, .tabs {
+      display: flex;
+      gap: 10px;
+      margin: 16px 0 18px;
+      border-bottom: 2px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .timeframe-btn, .tab-btn {
+      padding: 10px 16px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text-light);
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .timeframe-btn:hover, .tab-btn:hover { color: var(--primary); }
+    .timeframe-btn.active, .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px; }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 16px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .card.success { border-left-color: var(--success); }
+    .card.warning { border-left-color: var(--warning); }
+    .card.danger { border-left-color: var(--danger); }
+
+    .kpi-label { font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; font-weight: 700; }
+    .kpi-value { font-size: 28px; font-weight: 800; margin-bottom: 4px; line-height: 1; }
+    .kpi-sub { font-size: 12px; color: var(--text-light); }
+
+    .section { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow: hidden; margin-bottom: 16px; }
+    .section-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .section-title { font-size: 15px; margin: 0; font-weight: 800; color: var(--text); }
+    .section-body { padding: 16px; }
+
+    .hint { font-size: 12px; color: var(--text-light); margin: 0 0 12px 0; }
+
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .form-group { display: flex; flex-direction: column; }
+
+    label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+    input[type="text"], input[type="number"], input[type="date"], select {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    input:focus, select:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+    .readonly-preview { background: #e8f4f8 !important; color: var(--primary) !important; cursor: default; }
+
+    .form-actions { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 1600px; }
+    thead { background: var(--bg); border-bottom: 2px solid var(--border); }
+    th { padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text); white-space: nowrap; }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+    tbody tr:hover { background: rgba(45,138,142,0.05); }
+
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+    .pill.success { background: rgba(50,184,198,0.18); color: var(--primary); }
+    .pill.warning { background: rgba(230,129,77,0.20); color: var(--warning); }
+    .pill.danger { background: rgba(255,84,89,0.18); color: var(--danger); }
+
+    .editable { cursor: pointer; border-radius: 6px; }
+    .editable:hover { background: rgba(45,138,142,0.08); }
+
+    .cell-input { width: 100%; padding: 8px 10px; border: 2px solid var(--primary); border-radius: 8px; font-size: 13px; background: #fff; }
+
+    .row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-mini { padding: 7px 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 800; font-size: 12px; box-shadow: var(--shadow-sm); }
+    .btn-mini.danger { background: var(--danger); color: #fff; }
+
+    .status {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      display: none;
+    }
+
+    .status.success { display: block; background: rgba(50,184,198,0.18); color: var(--text); border: 1px solid rgba(50,184,198,0.35); }
+    .status.error { display: block; background: rgba(255,84,89,0.16); color: var(--text); border: 1px solid rgba(255,84,89,0.35); }
+
+    @media (max-width: 768px) {
+      body { padding: 12px; }
+      header { padding: 16px; }
+      .top-actions { justify-content: flex-start; }
+      .filter-input { min-width: 140px; }
+      table { min-width: 980px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>SBT Philippines KPI Dashboard</h1>
+      <p class="subtitle">Date picker auto-fills Year/Month/Week/Quarter for all views.</p>
+
+      <div class="top-actions">
+        <div class="filters">
+          <select class="filter-input" id="yearFilter" onchange="renderAll()">
+            <option value="">All Years</option>
+          </select>
+          <select class="filter-input" id="monthFilter" onchange="renderAll()">
+            <option value="">All Months</option>
+            <option value="January">January</option>
+            <option value="February">February</option>
+            <option value="March">March</option>
+            <option value="April">April</option>
+            <option value="May">May</option>
+            <option value="June">June</option>
+            <option value="July">July</option>
+            <option value="August">August</option>
+            <option value="September">September</option>
+            <option value="October">October</option>
+            <option value="November">November</option>
+            <option value="December">December</option>
+          </select>
+          <select class="filter-input" id="teamFilter" onchange="renderAll()">
+            <option value="">All Teams</option>
+          </select>
+          <input class="filter-input" id="searchFilter" type="text" placeholder="Search team..." onkeyup="renderAll()">
+        </div>
+        <div class="filters">
+          <button class="btn btn-secondary" onclick="saveToBrowser()">Save</button>
+          <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+          <input id="csvFile" type="file" accept=".csv" style="display:none">
+          <button class="btn btn-primary" onclick="triggerCSVImport()">Import CSV</button>
+          <button class="btn btn-danger" onclick="resetToBlank()">Clear Data</button>
+        </div>
+      </div>
+      <div id="status" class="status"></div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-dashboard')">Dashboard</button>
+      <button class="tab-btn" onclick="switchTab('tab-entry')">Data Entry</button>
+      <button class="tab-btn" onclick="switchTab('tab-data')">Data Table</button>
+    </div>
+
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="grid" id="kpiCards"></div>
+<div class="section">
+  <div class="section-header">
+    <h3 class="section-title">Monthly Target vs Ship OK</h3>
+    <p class="hint">Bar chart grouped by month (filtered data).</p>
+  </div>
+  <div class="section-body">
+    <div class="card" style="padding:20px;">
+      <canvas id="chartMonthly" style="height:250px;max-height:250px;"></canvas>
+    </div>
+  </div>
+</div>
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title" id="summaryTitle">Team Summary</h3>
+          <div class="hint" id="summaryHint">Filtered by date range.</div>
+        </div>
+        <div class="section-body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Team</th>
+                  <th>Target</th>
+                  <th>Ship OK</th>
+                  <th>Progress</th>
+                  <th>Upsell Rate</th>
+                  <th>Conv Rate</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="teamSummaryBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-entry" class="tab-content">
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">Add New KPI Row</h3>
+          <div class="hint">Pick date → auto-fills Year/Month/Week/Quarter. Enter your KPIs.</div>
+        </div>
+        <div class="section-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Date *</label>
+              <input type="date" id="inDate" onchange="autoFillDateFields()">
+              <small id="dateDisplay" style="font-size:11px; color:var(--primary); margin-top:4px;"></small>
+            </div>
+
+            <div class="form-group">
+              <label>Team *</label>
+              <select id="inTeamSelect" onchange="document.getElementById('inTeamCustom').value=''">
+                <option value="">Select team</option>
+              </select>
+              <input type="text" id="inTeamCustom" placeholder="Or custom team">
+            </div>
+
+            <div class="form-group">
+              <label>Target *</label>
+              <input type="number" id="inTarget" step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+              <label>Qualified Inquiries</label>
+              <input type="number" id="inQualified" step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+              <label>New Register</label>
+              <input type="number" id="inNewRegister" step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+              <label>New Deposit</label>
+              <input type="number" id="inNewDeposit" step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+              <label>New Deposit → Ship OK</label>
+              <input type="number" id="inNewDepositShipOK" step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+              <label>Strategic Customer</label>
+              <input type="number" id="inStrategic" step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+              <label>Retention</label>
+              <input type="number" id="inRetention" step="0.01" min="0">
+            </div>
+
+            <div class="form-group">
+              <label>Upsell</label>
+              <input type="number" id="inUpsell" step="0.01" min="0">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-success" onclick="addRow()">Add Row</button>
+            <button class="btn btn-secondary" onclick="clearEntryForm()">Clear Form</button>
+          </div>
+
+          <div class="hint" style="margin-top:20px;">
+            Auto-generated: <strong id="autoPreview"></strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-data" class="tab-content">
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">Data Table</h3>
+          <div class="hint">Click cells to edit. Ship OK and rates auto-calculate.</div>
+        </div>
+        <div class="section-body">
+          <div class="table-wrap">
+            <table id="dataTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Period</th>
+                  <th>Year</th>
+                  <th>Month</th>
+                  <th>Week</th>
+                  <th>Quarter</th>
+                  <th>Team</th>
+                  <th>Target</th>
+                  <th>Ship OK</th>
+                  <th>Progress</th>
+                  <th>Conv Rate</th>
+                  <th>Upsell Rate</th>
+                  <th>Edit/Delete</th>
+                </tr>
+              </thead>
+              <tbody id="dataBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'sbt-kpi-data-v1';
+    const TEAM_MASTER = ['OCENIA','CYPRUS','KENYA','MOZAMBIQUE','MALAWI','JAMAICA','BAHAMAS/GUYANA','TRUCKS'];
+    const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    let rows = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    let activeEdit = null;
+
+    function uid() {
+      return 'id-' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function saveToBrowser() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+      showStatus('Saved to browser', 'success');
+    }
+
+    function loadFromBrowser() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+      renderAll();
+    }
+
+    function renderAll() {
+      populateFilters();
+      renderKPIs();
+      renderTeamSummary();
+      renderDataTable();
+    }
+
+    function populateFilters() {
+      const years = [...new Set(rows.map(r => r.YEAR).filter(Boolean))].sort((a,b) => b-a);
+      const teams = [...new Set([...TEAM_MASTER, ...rows.map(r => r.TEAM).filter(Boolean)])].sort();
+
+      const yearSel = document.getElementById('yearFilter');
+      const monthSel = document.getElementById('monthFilter');
+      const teamSel = document.getElementById('teamFilter');
+      const teamEntrySel = document.getElementById('inTeamSelect');
+
+      const prevYear = yearSel.value;
+      const prevMonth = monthSel.value;
+      const prevTeam = teamSel.value;
+      const prevEntryTeam = teamEntrySel.value;
+
+      yearSel.innerHTML = '<option value="">All Years</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+      teamSel.innerHTML = '<option value="">All Teams</option>' + teams.map(t => `<option value="${t}">${t}</option>`).join('');
+      teamEntrySel.innerHTML = '<option value="">Select team</option>' + teams.map(t => `<option value="${t}">${t}</option>`).join('');
+
+      if ([...yearSel.options].some(o => o.value === prevYear)) yearSel.value = prevYear;
+      if ([...monthSel.options].some(o => o.value === prevMonth)) monthSel.value = prevMonth;
+      if ([...teamSel.options].some(o => o.value === prevTeam)) teamSel.value = prevTeam;
+      if ([...teamEntrySel.options].some(o => o.value === prevEntryTeam)) teamEntrySel.value = prevEntryTeam;
+    }
+
+    function getFilteredRows() {
+      const year = document.getElementById('yearFilter').value;
+      const month = document.getElementById('monthFilter').value;
+      const team = document.getElementById('teamFilter').value;
+      const search = document.getElementById('searchFilter').value.toLowerCase();
+
+      return rows.filter(r => {
+        return (!year || r.YEAR == year) &&
+               (!month || r.MONTH == month) &&
+               (!team || r.TEAM == team) &&
+               (!search || r.TEAM.toLowerCase().includes(search));
+      });
+    }
+
+    function autoFillDateFields() {
+      const dateStr = document.getElementById('inDate').value;
+      if (!dateStr) return;
+
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const monthIndex = date.getMonth();
+      const week = Math.ceil((date.getDate() + (date.getDay() || 7) - 1) / 7);
+      const quarter = Math.floor(monthIndex / 3) + 1;
+
+      document.getElementById('inYearPreview').value = year;
+      document.getElementById('inMonthPreview').value = MONTH_NAMES[monthIndex];
+      document.getElementById('inWeekPreview').value = `Week ${week}`;
+      document.getElementById('inQuarterPreview').value = `Q${quarter}`;
+
+      document.getElementById('dateDisplay').textContent = `${MONTH_NAMES[monthIndex]} Week ${week}, ${year}`;
+      document.getElementById('autoPreview').textContent = `Year: ${year} | Month: ${MONTH_NAMES[monthIndex]} | Week: ${week} | Quarter: Q${quarter}`;
+    }
+
+    function addRow() {
+      const dateStr = document.getElementById('inDate').value;
+      if (!dateStr) {
+        showStatus('Please pick a date', 'error');
+        return;
+      }
+
+      const date = new Date(dateStr);
+      const PERIOD = `${MONTH_NAMES[date.getMonth()]} Week ${Math.ceil((date.getDate() + (date.getDay() || 7) - 1) / 7)}, ${date.getFullYear()}`;
+
+      const team = document.getElementById('inTeamSelect').value || document.getElementById('inTeamCustom').value.trim();
+      if (!team) {
+        showStatus('Please select or type a team', 'error');
+        return;
+      }
+
+      const target = parseFloat(document.getElementById('inTarget').value);
+      if (!isFinite(target) || target <= 0) {
+        showStatus('Please enter valid Target > 0', 'error');
+        return;
+      }
+
+      const row = {
+        id: uid(),
+        DATE: dateStr,
+        PERIOD,
+        YEAR: date.getFullYear(),
+        MONTH: MONTH_NAMES[date.getMonth()],
+        WEEK: Math.ceil((date.getDate() + (date.getDay() || 7) - 1) / 7),
+        QUARTER: Math.floor(date.getMonth() / 3) + 1,
+        TEAM: team,
+        TARGET: target,
+        QUALIFIED_INQUIRIES: parseFloat(document.getElementById('inQualified').value) || 0,
+        NEW_REGISTER: parseFloat(document.getElementById('inNewRegister').value) || 0,
+        NEW_DEPOSIT: parseFloat(document.getElementById('inNewDeposit').value) || 0,
+        NEW_DEPOSIT_SHIP_OK: parseFloat(document.getElementById('inNewDepositShipOK').value) || 0,
+        STRATEGIC_CUSTOMER: parseFloat(document.getElementById('inStrategic').value) || 0,
+        RETENTION: parseFloat(document.getElementById('inRetention').value) || 0,
+        UPSELL: parseFloat(document.getElementById('inUpsell').value) || 0
+      };
+
+      rows.unshift(row);
+      saveToBrowser();
+      clearEntryForm();
+      showStatus(`Added: ${row.PERIOD} - ${row.TEAM}`, 'success');
+      renderAll();
+    }
+
+    function clearEntryForm() {
+      document.querySelectorAll('#tab-entry input, #tab-entry select').forEach(el => el.value = '');
+      document.getElementById('dateDisplay').textContent = '';
+      document.getElementById('autoPreview').textContent = '';
+    }
+
+    function renderKPIs() {
+      const filtered = getFilteredRows();
+      const totals = filtered.reduce((acc, r) => {
+        const shipOK = (r.NEW_DEPOSIT_SHIP_OK || 0) + (r.STRATEGIC_CUSTOMER || 0) + (r.RETENTION || 0);
+        acc.count += 1;
+        acc.target += r.TARGET || 0;
+        acc.shipOK += shipOK;
+        acc.upsell += r.UPSELL || 0;
+        acc.qualified += r.QUALIFIED_INQUIRIES || 0;
+        return acc;
+      }, { count: 0, target: 0, shipOK: 0, upsell: 0, qualified: 0 });
+
+      const progress = totals.target ? totals.shipOK / totals.target : 0;
+      const upsellRate = totals.shipOK ? totals.upsell / totals.shipOK : 0;
+      const convRate = totals.qualified ? totals.shipOK / totals.qualified : 0;
+
+      document.getElementById('kpiCards').innerHTML = `
+        <div class="card">
+          <div class="kpi-label">Rows</div>
+          <div class="kpi-value">${filtered.length}</div>
+          <div class="kpi-sub">Filtered rows</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Total Target</div>
+          <div class="kpi-value">${totals.target.toLocaleString()}</div>
+          <div class="kpi-sub">Sum of targets</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Ship OK</div>
+          <div class="kpi-value">${totals.shipOK.toLocaleString()}</div>
+          <div class="kpi-sub">Strategic + Retention + New Deposit Ship OK</div>
+        </div>
+        <div class="card ${progress >= 1 ? 'success' : progress >= 0.7 ? 'warning' : 'danger'}">
+          <div class="kpi-label">Progress</div>
+          <div class="kpi-value">${(progress*100).toFixed(1)}%</div>
+          <div class="kpi-sub">Ship OK / Target</div>
+        </div>
+        <div class="card ${upsellRate >= 0.5 ? 'success' : upsellRate >= 0.3 ? 'warning' : 'danger'}">
+          <div class="kpi-label">Upsell Rate</div>
+          <div class="kpi-value">${(upsellRate*100).toFixed(1)}%</div>
+          <div class="kpi-sub">Upsell / Ship OK</div>
+        </div>
+        <div class="card ${convRate >= 0.03 ? 'success' : convRate >= 0.02 ? 'warning' : 'danger'}">
+          <div class="kpi-label">Conv Rate</div>
+          <div class="kpi-value">${(convRate*100).toFixed(1)}%</div>
+          <div class="kpi-sub">Ship OK / Qualified Inquiries</div>
+        </div>
+      `;
+    }
+
+    function renderTeamSummary() {
+      const filtered = getFilteredRows();
+      const teamMap = {};
+
+      filtered.forEach(r => {
+        const shipOK = (r.NEW_DEPOSIT_SHIP_OK || 0) + (r.STRATEGIC_CUSTOMER || 0) + (r.RETENTION || 0);
+        if (!teamMap[r.TEAM]) {
+          teamMap[r.TEAM] = { TEAM: r.TEAM, target: 0, shipOK: 0, upsell: 0, qualified: 0, count: 0 };
+        }
+        teamMap[r.TEAM].target += r.TARGET || 0;
+        teamMap[r.TEAM].shipOK += shipOK;
+        teamMap[r.TEAM].upsell += r.UPSELL || 0;
+        teamMap[r.TEAM].qualified += r.QUALIFIED_INQUIRIES || 0;
+        teamMap[r.TEAM].count += 1;
+      });
+
+      const teams = Object.values(teamMap).sort((a,b) => b.shipOK - a.shipOK);
+      document.getElementById('teamSummaryBody').innerHTML = teams.map(team => {
+        const progress = team.target ? team.shipOK / team.target : 0;
+        const upsellRate = team.shipOK ? team.upsell / team.shipOK : 0;
+        const convRate = team.qualified ? team.shipOK / team.qualified : 0;
+        const status = progress >= 1 ? 'success' : progress >= 0.7 ? 'warning' : 'danger';
+        const label = progress >= 1 ? 'On Track' : progress >= 0.7 ? 'Watch' : 'Risk';
+
+        return `
+          <tr>
+            <td><strong>${team.TEAM || team.team}</strong></td>
+            <td>${team.target.toLocaleString()}</td>
+            <td>${team.shipOK.toLocaleString()}</td>
+            <td>${(progress*100).toFixed(1)}%</td>
+            <td>${(upsellRate*100).toFixed(1)}%</td>
+            <td>${(convRate*100).toFixed(1)}%</td>
+            <td><span class="pill ${status}">${label}</span></td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-light)">No data</td></tr>';
+    }
+
+    function renderDataTable() {
+      const filtered = getFilteredRows().sort((a,b) => new Date(b.DATE) - new Date(a.DATE));
+      const tbody = document.getElementById('dataBody');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text-light)">No data. Add rows above.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => {
+        const shipOK = (r.NEW_DEPOSIT_SHIP_OK || 0) + (r.STRATEGIC_CUSTOMER || 0) + (r.RETENTION || 0);
+        const progress = (r.TARGET || 0) ? shipOK / r.TARGET : 0;
+        const convRate = (r.QUALIFIED_INQUIRIES || 0) ? shipOK / r.QUALIFIED_INQUIRIES : 0;
+        const upsellRate = shipOK ? (r.UPSELL || 0) / shipOK : 0;
+
+        
+        return `
+          <tr>
+            <td>${r.DATE}</td>
+            <td>${r.PERIOD}</td>
+            <td>${r.YEAR}</td>
+            <td>${r.MONTH}</td>
+            <td>Week ${r.WEEK}</td>
+            <td>Q${r.QUARTER}</td>
+            <td class="editable" onclick="editCell('${r.id}', 'TEAM')">${r.TEAM}</td>
+            <td class="editable" onclick="editCell('${r.id}', 'TARGET')">${r.TARGET}</td>
+            <td><strong>${shipOK.toLocaleString()}</strong></td>
+            <td>${(progress*100).toFixed(1)}%</td>
+            <td>${(convRate*100).toFixed(1)}%</td>
+            <td>${(upsellRate*100).toFixed(1)}%</td>
+            <td><button class="btn-mini danger" onclick="deleteRow('${r.id}')">Delete</button></td>
+          </tr>
+        `;
+      }).join('');
+    }
+function editCell(rowId, field) {
+      if (activeEdit) return;
+      activeEdit = { rowId, field };
+      const row = rows.find(r => r.id === rowId);
+      if (!row) return;
+
+      const cell = event.target;
+      const input = document.createElement('input');
+      input.className = 'cell-input';
+      input.value = row[field] || '';
+      input.type = field === 'TARGET' ? 'number' : 'text';
+      if (input.type === 'number') input.step = '0.01';
+
+      input.onblur = () => commitEdit(input);
+      input.onkeydown = (e) => {
+        if (e.key === 'Enter') commitEdit(input);
+        if (e.key === 'Escape') cancelEdit();
+      };
+
+      cell.innerHTML = '';
+      cell.appendChild(input);
+      input.focus();
+      input.select();
+    }
+
+    function commitEdit(input) {
+      const { rowId, field } = activeEdit;
+      const row = rows.find(r => r.id === rowId);
+      if (!row) return;
+
+      row[field] = input.type === 'number' ? parseFloat(input.value) || 0 : input.value.trim();
+      activeEdit = null;
+      saveToBrowser();
+      renderAll();
+      showStatus('Updated', 'success');
+    }
+
+    function cancelEdit() {
+      activeEdit = null;
+      renderAll();
+    }
+
+    function deleteRow(id) {
+      if (confirm('Delete this row?')) {
+        rows = rows.filter(r => r.id !== id);
+        saveToBrowser();
+        renderAll();
+        showStatus('Row deleted', 'success');
+      }
+    }
+
+    function triggerCSVImport() {
+      document.getElementById('csvFile').click();
+    }
+
+    document.getElementById('csvFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const csv = e.target.result;
+          const parsed = parseCSV(csv);
+          rows = parsed.map(row => ({ id: uid(), ...row }));
+          saveToBrowser();
+          renderAll();
+          showStatus(`${parsed.length} rows imported`, 'success');
+        } catch (err) {
+          showStatus('Import failed: ' + err.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    function parseCSV(csv) {
+      const lines = csv.split('\n').map(l => l.trim()).filter(Boolean);
+      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+      return lines.slice(1).map(line => {
+        const values = line.split(',');
+        const row = {};
+        headers.forEach((h, i) => row[h] = values[i] ? values[i].replace(/"/g, '') : '');
+        return row;
+      }).filter(row => row.DATE && row.TEAM);
+    }
+
+    function exportCSV() {
+      const headers = ['DATE','PERIOD','YEAR','MONTH','WEEK','QUARTER','TEAM','TARGET','QUALIFIED_INQUIRIES','NEW_REGISTER','NEW_DEPOSIT','NEW_DEPOSIT_SHIP_OK','STRATEGIC_CUSTOMER','RETENTION','UPSELL'];
+      const csv = [headers.join(',')];
+      rows.forEach(r => {
+        csv.push(headers.map(h => `"${r[h] || ''}"`).join(','));
+      });
+      downloadFile(csv.join('\n'), `sbt-kpi-${new Date().toISOString().slice(0,10)}.csv`, 'text/csv');
+    }
+
+    function downloadFile(content, filename, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function showStatus(msg, type = 'success') {
+      const status = document.getElementById('status');
+      status.textContent = msg;
+      status.className = `status ${type}`;
+      clearTimeout(window.statusTimeout);
+      window.statusTimeout = setTimeout(() => status.className = 'status', 3000);
+    }
+
+    function resetToBlank() { showStatus("Disabled - no clearing!", "error"); }
+
+    window.addEventListener('load', () => {
+      // Set default date to today
+      document.getElementById('inDate').value = new Date().toISOString().split('T')[0];
+      autoFillDateFields();
+      renderAll();
+      showStatus('Dashboard ready - pick date to start!', 'success');
+    });
+  
+function editRow(rowId) {
+  const row = rows.find(r => r.id === rowId);
+  if (!row) return;
+
+  // Fill entry form
+  document.getElementById('inDate').value = row.DATE;
+  autoFillDateFields();
+  document.getElementById('inTeamSelect').value = row.TEAM || '';
+  document.getElementById('inTarget').value = row.TARGET || '';
+  document.getElementById('inQualified').value = row.QUALIFIEDINQUIRIES || '';
+  document.getElementById('inNewRegister').value = row.NEWREGISTER || '';
+  document.getElementById('inNewDeposit').value = row.NEWDEPOSIT || '';
+  document.getElementById('inNewDepositShipOK').value = row.NEWDEPOSITSHIPOK || '';
+  document.getElementById('inStrategic').value = row.STRATEGICCUSTOMER || '';
+  document.getElementById('inRetention').value = row.RETENTION || '';
+  document.getElementById('inUpsell').value = row.UPSELL || '';
+
+  switchTab('tab-entry');
+  window.editingRowId = rowId;
+  showStatus(`Editing ${row.TEAM} - ${row.DATE}`, 'success');
+}
+
+// Modify addRow to handle editing
+const originalAddRow = window.addRow || addRow;
+window.addRow = function() {
+  if (window.editingRowId) {
+    // Update existing row
+    const row = rows.find(r => r.id === window.editingRowId);
+    if (row) {
+      row.DATE = document.getElementById('inDate').value;
+      row.TEAM = document.getElementById('inTeamSelect').value || document.getElementById('inTeamCustom').value;
+      row.TARGET = parseFloat(document.getElementById('inTarget').value) || 0;
+      // ... update other fields similarly
+      showStatus('Row updated!', 'success');
+    }
+    window.editingRowId = null;
+  } else {
+    originalAddRow();
+  }
+  clearEntryForm();
+  renderAll();
+};
+
+</script>
+  let chartMonthly;
+
+  function renderMonthlyChart() {
+    const filtered = getFilteredRows();
+    if (filtered.length === 0) return;
+
+    const monthlyData = {};
+    filtered.forEach(r => {
+      const monthKey = `${r.YEAR}-${r.MONTH}`;
+      if (!monthlyData[monthKey]) monthlyData[monthKey] = {target: 0, shipOK: 0};
+      const shipOK = (r.NEWDEPOSITSHIPOK || 0) + (r.STRATEGICCUSTOMER || 0) + (r.RETENTION || 0);
+      monthlyData[monthKey].target += r.TARGET || 0;
+      monthlyData[monthKey].shipOK += shipOK;
+    });
+
+    const months = Object.keys(monthlyData).sort();
+    const targets = months.map(m => monthlyData[m].target);
+    const shipOKs = months.map(m => monthlyData[m].shipOK);
+
+    const ctx = document.getElementById("chartMonthly");
+    if (!ctx) return;
+
+    if (chartMonthly) chartMonthly.destroy();
+    chartMonthly = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: months,
+        datasets: [
+          {label: "Target", data: targets, backgroundColor: "#e6814d", borderRadius: 4},
+          {label: "Ship OK", data: shipOKs, backgroundColor: "#32b8c6", borderRadius: 4}
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {legend: {position: "top"}},
+        scales: {y: {beginAtZero: true}}
+      }
+    });
+  }
+
+  // Override renderKPIs to exclude Rows card and add chart
+  const origRenderKPIs = renderKPIs;
+  renderKPIs = function() {
+    const filtered = getFilteredRows();
+    const totals = filtered.reduce((acc, r) => {
+      const shipOK = (r.NEWDEPOSITSHIPOK || 0) + (r.STRATEGICCUSTOMER || 0) + (r.RETENTION || 0);
+      acc.target += r.TARGET || 0;
+      acc.shipOK += shipOK;
+      acc.upsell += r.UPSELL || 0;
+      acc.qualified += r.QUALIFIEDINQUIRIES || 0;
+      return acc;
+    }, {target: 0, shipOK: 0, upsell: 0, qualified: 0});
+
+    const progress = totals.target ? totals.shipOK / totals.target : 0;
+    const upsellRate = totals.shipOK ? totals.upsell / totals.shipOK : 0;
+    const convRate = totals.qualified ? totals.shipOK / totals.qualified : 0;
+
+    document.getElementById("kpiCards").innerHTML = 
+      `<div class="card">
+         <div class="kpi-label">Total Target</div>
+         <div class="kpi-value">${totals.target.toLocaleString()}</div>
+         <div class="kpi-sub">Sum of targets</div>
+       </div>
+       <div class="card ${progress >= 1 ? 'success' : progress >= 0.7 ? 'warning' : 'danger'}">
+         <div class="kpi-label">Progress</div>
+         <div class="kpi-value">${(progress * 100).toFixed(1)}%</div>
+         <div class="kpi-sub">Ship OK / Target</div>
+       </div>
+       <div class="card ${upsellRate >= 0.5 ? 'success' : upsellRate >= 0.3 ? 'warning' : 'danger'}">
+         <div class="kpi-label">Upsell Rate</div>
+         <div class="kpi-value">${(upsellRate * 100).toFixed(1)}%</div>
+         <div class="kpi-sub">Upsell / Ship OK</div>
+       </div>
+       <div class="card ${convRate >= 0.03 ? 'success' : convRate >= 0.02 ? 'warning' : 'danger'}">
+         <div class="kpi-label">Conv Rate</div>
+         <div class="kpi-value">${(convRate * 100).toFixed(1)}%</div>
+         <div class="kpi-sub">Ship OK / Qualified</div>
+       </div>`;
+    setTimeout(renderMonthlyChart, 100);
+  };
+
+  window.addEventListener("load", renderAll);
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
